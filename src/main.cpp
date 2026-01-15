@@ -1,6 +1,8 @@
 #include "config.h"
 
 int main(){
-    //initOpenGL();
+    App* app = new App();
+    app->set_up_opengl();
+    // app->run();
     return 0;
 }
