@@ -1,6 +1,7 @@
 #include "config.h"
 
 float f = 16.67/1000.f;
+vec3 camPos(0.f,0.f,-1.f);
 
 unsigned int make_module(const std::string& filepath, unsigned int module_type) {
 	
@@ -10,12 +11,12 @@ unsigned int make_module(const std::string& filepath, unsigned int module_type) 
 
 	file.open(filepath);
 	while (std::getline(file, line)) {
-		//std::cout << line << std::endl;
+		// std::cout << line << std::endl;
 		bufferedLines << line << '\n';
 	}
 	std::string shaderSource = bufferedLines.str();
 	const char* shaderSrc = shaderSource.c_str();
-	bufferedLines.str("");
+	// bufferedLines.str("");
 	file.close();
 
 	unsigned int shaderModule = glCreateShader(module_type);
@@ -33,8 +34,7 @@ unsigned int make_module(const std::string& filepath, unsigned int module_type) 
 	return shaderModule;
 }
 
-unsigned int make_shader(
-    const std::string& vertex_filepath, const std::string& fragment_filepath) {
+unsigned int make_shader(const std::string& vertex_filepath, const std::string& fragment_filepath) {
 
 	//To store all the shader modules
 	std::vector<unsigned int> modules;
@@ -87,7 +87,18 @@ unsigned int App::make_entity(){
 }
 
 void App::run(){
+	shader = make_shader(
+		"../shaders/vertexShader.glsl", 
+		"../shaders/fragmentShader.glsl");
+    
+    glUseProgram(shader);
+	TriangleMesh* triangle = new TriangleMesh();
     while(!glfwWindowShouldClose(window)){
+		glfwPollEvents();
+
+		glClear(GL_COLOR_BUFFER_BIT);
+		triangle->draw();
+		glfwSwapBuffers(window);
         // motionSystem->update(
         //     transformComponents, physicsComponents, f);
         // bool should_close = cameraSystem->update(
@@ -138,7 +149,7 @@ void App::set_up_glfw() {
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 	glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GLFW_TRUE);
 	
-	window = glfwCreateWindow(640, 640, "Hello Window!", NULL, NULL);
+	window = glfwCreateWindow(1280, 720, "Hello Window!", NULL, NULL);
 	glfwMakeContextCurrent(window);
 	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
 
@@ -151,25 +162,21 @@ void App::set_up_glfw() {
 
 void App::set_up_opengl() {
 
-    glClearColor(0.25f, 0.5f, 0.75f, 1.0f);
+    glClearColor(0.f, 0.f, 0.f, 1.0f);
 	//Set the rendering region to the actual screen size
 	int w,h;
 	glfwGetFramebufferSize(window, &w, &h);
 	//(left, top, width, height)
 	glViewport(0,0,w,h);
 
-	glEnable(GL_DEPTH_TEST);
-	glDepthFunc(GL_LESS);
+	// glEnable(GL_DEPTH_TEST);
+	// glDepthFunc(GL_LESS);
 	glEnable(GL_CULL_FACE);
     glCullFace(GL_BACK);
-
-    shader = make_shader(
-		"../shaders/vertexShader.glsl", 
-		"../shaders/fragmentShader.glsl");
-    
-    glUseProgram(shader);
-	unsigned int projLocation = glGetUniformLocation(shader, "projection");
-	mat4 projection = mat4F::perspective(
-		45.0f, 1.f, 0.1f, 10.0f);
-	glUniformMatrix4fv(projLocation, 1, GL_FALSE, projection.value_ptr());
+	unsigned int camPosLocation = glGetUniformLocation(shader, "camPos");
+	glUniform3fv(camPosLocation, 1, camPos.value_ptr());
+	// unsigned int projLocation = glGetUniformLocation(shader, "projection");
+	// mat4 projection = mat4F::perspective(
+	// 	45.0f, 1.f, 0.1f, 10.0f);
+	// glUniformMatrix4fv(projLocation, 1, GL_FALSE, projection.value_ptr());
 }

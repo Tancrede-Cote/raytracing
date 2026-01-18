@@ -7,6 +7,7 @@ public:
     float x{};
     float y{};
     float z{};
+    float content[3]{};
     vec3(){}
     vec3(float x, float y, float z) : x(x), y(y), z(z){}
     ~vec3(){}
@@ -20,7 +21,7 @@ public:
     void operator+=(vec3 u){x+=u.x;y+=u.y;z+=u.z;}
     void operator-=(vec3 u){x-=u.x;y-=u.y;z-=u.z;}
     vec3 operator*(float f){return vec3(x*f,y*f,z*f);}
-    
+    float* value_ptr(){content[0]=x;content[1]=y;content[2]=z;return content;}
     friend vec3 operator*(float, vec3);
 };
 

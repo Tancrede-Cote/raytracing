@@ -10,6 +10,7 @@ add_executable(
     src/app.cpp
     src/math.cpp
     src/init.cpp
+    src/screen.cpp
 
 )
 
