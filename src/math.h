@@ -23,6 +23,7 @@ public:
     vec3 operator*(float f){return vec3(x*f,y*f,z*f);}
     float* value_ptr(){content[0]=x;content[1]=y;content[2]=z;return content;}
     friend vec3 operator*(float, vec3);
+    // friend std::ostream& operator<<(std::ostream, vec3&);
 };
 
 template <typename T, typename Q>
@@ -30,6 +31,11 @@ Q operator*(T lambda, Q u)
 {
     return u * lambda;
 }
+
+// std::ostream& operator<<(std::ostream& o, vec3& v){
+//     o<<"("<<v.x<<","<<v.y<<","<<v.z<<")";
+//     return o;
+// }
 
 class vec4 {
 public:

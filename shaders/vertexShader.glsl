@@ -12,8 +12,6 @@ const vec3 colors[3] = vec3[](
     vec3(0.0, 0.0, 1.0)
 );
 
-uniform vec3 camPos;
-
 float d2(vec3 u, vec3 v){
     return (u.x-v.x)*(u.x-v.x)+(u.y-v.y)*(u.y-v.y)+(u.z-v.z)*(u.z-v.z);
 }

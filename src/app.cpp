@@ -1,7 +1,10 @@
 #include "config.h"
 
 float f = 16.67/1000.f;
-vec3 camPos(0.f,0.f,-1.f);
+vec3 camPos(0.f,1.f,3.f);
+vec3 camOrientation(0.f,0.f,-1.f);// unused for now
+
+unsigned int camPosLocation;
 
 unsigned int make_module(const std::string& filepath, unsigned int module_type) {
 	
@@ -87,11 +90,6 @@ unsigned int App::make_entity(){
 }
 
 void App::run(){
-	shader = make_shader(
-		"../shaders/vertexShader.glsl", 
-		"../shaders/fragmentShader.glsl");
-    
-    glUseProgram(shader);
 	TriangleMesh* triangle = new TriangleMesh();
     while(!glfwWindowShouldClose(window)){
 		glfwPollEvents();
@@ -141,6 +139,12 @@ unsigned int App::make_texture(const char* filename) {
     // return texture;
 }
 
+void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods){
+	if(action == GLFW_PRESS && key == GLFW_KEY_ESCAPE) {
+    	glfwSetWindowShouldClose(window, true); // Closes the application if the escape key is pressed
+  	}
+}
+
 void App::set_up_glfw() {
 
     glfwInit();
@@ -149,9 +153,10 @@ void App::set_up_glfw() {
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 	glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GLFW_TRUE);
 	
-	window = glfwCreateWindow(1280, 720, "Hello Window!", NULL, NULL);
+	window = glfwCreateWindow(1000, 1000, "Hello Window!", NULL, NULL);
 	glfwMakeContextCurrent(window);
-	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
+	// glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
+	glfwSetKeyCallback(window, keyCallback);
 
     if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
 		std::cout << "Couldn't load opengl" << std::endl;
@@ -173,10 +178,16 @@ void App::set_up_opengl() {
 	// glDepthFunc(GL_LESS);
 	glEnable(GL_CULL_FACE);
     glCullFace(GL_BACK);
-	unsigned int camPosLocation = glGetUniformLocation(shader, "camPos");
-	glUniform3fv(camPosLocation, 1, camPos.value_ptr());
+	shader = make_shader(
+		"../shaders/vertexShader.glsl", 
+		"../shaders/fragmentShader.glsl");
+    
+	camPosLocation = glGetUniformLocation(shader, "camPos");
+	glUseProgram(shader);
+	glUniform3f(camPosLocation, 0.f,1.f,3.f);
 	// unsigned int projLocation = glGetUniformLocation(shader, "projection");
 	// mat4 projection = mat4F::perspective(
 	// 	45.0f, 1.f, 0.1f, 10.0f);
 	// glUniformMatrix4fv(projLocation, 1, GL_FALSE, projection.value_ptr());
 }
+
