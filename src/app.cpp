@@ -1,10 +1,15 @@
 #include "config.h"
 
 float f = 16.67/1000.f;
+int w = 1280;
+int h = 720;
 vec3 camPos(0.f,1.f,3.f);
 vec3 camOrientation(0.f,0.f,-1.f);// unused for now
 
 unsigned int camPosLocation;
+
+unsigned int hLocation;
+unsigned int wLocation;
 
 unsigned int make_module(const std::string& filepath, unsigned int module_type) {
 	
@@ -95,6 +100,8 @@ void App::run(){
 		glfwPollEvents();
 
 		glClear(GL_COLOR_BUFFER_BIT);
+
+    	glUniform1f(glGetUniformLocation(shader, "time"), static_cast<float>(glfwGetTime()));
 		triangle->draw();
 		glfwSwapBuffers(window);
         // motionSystem->update(
@@ -153,7 +160,7 @@ void App::set_up_glfw() {
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 	glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GLFW_TRUE);
 	
-	window = glfwCreateWindow(1000, 1000, "Hello Window!", NULL, NULL);
+	window = glfwCreateWindow(w, h, "Hello Window!", NULL, NULL);
 	glfwMakeContextCurrent(window);
 	// glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
 	glfwSetKeyCallback(window, keyCallback);
@@ -169,7 +176,6 @@ void App::set_up_opengl() {
 
     glClearColor(0.f, 0.f, 0.f, 1.0f);
 	//Set the rendering region to the actual screen size
-	int w,h;
 	glfwGetFramebufferSize(window, &w, &h);
 	//(left, top, width, height)
 	glViewport(0,0,w,h);
@@ -183,8 +189,12 @@ void App::set_up_opengl() {
 		"../shaders/fragmentShader.glsl");
     
 	camPosLocation = glGetUniformLocation(shader, "camPos");
+	hLocation = glGetUniformLocation(shader, "h");
+	wLocation = glGetUniformLocation(shader, "w");
 	glUseProgram(shader);
 	glUniform3f(camPosLocation, 0.f,1.f,3.f);
+	glUniform1i(hLocation, h);
+	glUniform1i(wLocation, w);
 	// unsigned int projLocation = glGetUniformLocation(shader, "projection");
 	// mat4 projection = mat4F::perspective(
 	// 	45.0f, 1.f, 0.1f, 10.0f);
