@@ -192,7 +192,7 @@ void App::set_up_opengl() {
 	hLocation = glGetUniformLocation(shader, "h");
 	wLocation = glGetUniformLocation(shader, "w");
 	glUseProgram(shader);
-	glUniform3f(camPosLocation, 0.f,1.f,3.f);
+	glUniform3fv(camPosLocation, 1, camPos.value_ptr());
 	glUniform1i(hLocation, h);
 	glUniform1i(wLocation, w);
 	// unsigned int projLocation = glGetUniformLocation(shader, "projection");
