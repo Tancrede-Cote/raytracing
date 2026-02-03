@@ -79,6 +79,19 @@ float intersect3(vec3 origin, vec3 ray, vec3 center, float r){
 }
 
 // Returns .x > .y if no intersection
+vec2 raySphere(vec3 rayPos, vec3 rayDir, vec3 sphPos, float radius, out vec3 point)
+{
+    vec3 p = rayPos - sphPos;
+    float delta = 4. * (dot(p, rayDir) * dot(p, rayDir) - dot(rayDir, rayDir) * (dot(p, p) - radius * radius));
+    if(delta < 0.) {
+        point = vec3(0,0,0); 
+        return vec2(1e5, -1e5);
+    }
+    point = rayPos+(-2. * dot(p, rayDir) - sqrt(delta)) / (2. * dot(rayDir, rayDir))*rayDir;
+    return vec2((-2. * dot(p, rayDir) - sqrt(delta)) / (2. * dot(rayDir, rayDir)), 
+                (-2. * dot(p, rayDir) + sqrt(delta)) / (2. * dot(rayDir, rayDir)));
+}
+
 vec2 raySphere(vec3 rayPos, vec3 rayDir, vec3 sphPos, float radius)
 {
     vec3 p = rayPos - sphPos;
@@ -88,6 +101,14 @@ vec2 raySphere(vec3 rayPos, vec3 rayDir, vec3 sphPos, float radius)
                 (-2. * dot(p, rayDir) + sqrt(delta)) / (2. * dot(rayDir, rayDir)));
 }
 
+vec3 raySphere2(vec3 rayPos, vec3 rayDir, vec3 sphPos, float radius)
+{
+    vec3 p = rayPos - sphPos;
+    float delta = 4. * (dot(p, rayDir) * dot(p, rayDir) - dot(rayDir, rayDir) * (dot(p, p) - radius * radius));
+    if(delta < 0.) return vec3(1e5, -1e5, 0);
+    return rayPos+(-2. * dot(p, rayDir) - sqrt(delta)) / (2. * dot(rayDir, rayDir))*rayDir;
+}
+
 mat2 rot2D(float theta)
 {
     return mat2(vec2(cos(theta), -sin(theta)), vec2(sin(theta), cos(theta)));
@@ -95,35 +116,58 @@ mat2 rot2D(float theta)
 
 void main()
 {
-    vec3 sphereCenter = vec3(0., 0.5, 0.);
-    vec3 omniLight = vec3(0.5, 1.3, -0.5);
+    vec3 sphereCenter = vec3(sin(time/3), 0.5, 0.);
+    vec3 sphereColor = vec3(1, 0., 0.);
+    int nSpheres = 2;
+    vec3 aSpheres[2] = vec3[](vec3(sin(time/3), 0.5, 0.),vec3(-0.5,0.,-0.5));
+    int nLights = 2;
+    vec3 alights[2] = vec3[](vec3(sin(time), 1.3, -1.),vec3(1., sin(time)/2+1, -1.));
+    vec3 omniLight = vec3(sin(time), 1.3, -1.);
     omniLight.xz *= rot2D(time);
+    alights[0].xz *= rot2D(time);
     vec3 uv = vec3(fragPos.x*w/h,fragPos.y,fragPos.z);
     float fov = 70.;
     vec3 ray = vec3(uv.xy, -2. / tan(fov));
-    vec3 hit_point = intersect2(camPos, ray, sphereCenter, 0.4);
+    vec3 hit_point;
+    vec2 inte = raySphere(camPos, ray, aSpheres[0], 0.4, hit_point);
     vec3 hit_point2 = intersectp(camPos, ray, vec3(0,0,0), vec3(0,1,0));
-    vec3 hit_point3 = intersect2(camPos, ray, omniLight, 0.4);
-    bool touch_sphere = false;
-    screenColor = vec4(0.,0.25,1.,1.);
-    if(length(hit_point2)>0.){
-        screenColor = vec4(0.5,0.5,0.5,1.);
-        if (intersect(hit_point2, normalize(omniLight-hit_point2), sphereCenter, 0.4)){
-            screenColor = vec4(0,0,0,1);
-        }
-    } 
-    if (length(hit_point)>0.){
-        touch_sphere=true;
-        vec3 ray2 = omniLight-hit_point;
-        //screenColor = vec4(1.,1.,0.,1.);
-        screenColor = vec4((intersect(omniLight,-ray2,sphereCenter,0.4))?vec3(1.,0.5,0.):vec3(1.,1.,1.),1.0);
-    } else {
-        
-        // screenColor = vec4((intersect(hit_point2, normalize(omniLight-hit_point2), sphereCenter, 0.4))?vec3(0,0,0):vec3(1,0,0.),1.0);
+    vec2 t = raySphere(camPos, ray, alights[0], 0.4);
+    bool ground = length(hit_point2)>0.;
+    bool sphere = inte.x<inte.y;
+    bool light = false;
+    bool transparent = false;
+    for(int i=0; i<nLights; i++){
+        vec2 t = raySphere(camPos, ray, alights[i], 0.4);
+        light=light||(t.x<t.y);
     }
-    if (length(hit_point3)>0.){
-        screenColor = vec4(vec3(1.,1.,0.),1.0);
-    } else {
-        // screenColor = vec4(1.0,1.0,0.,1.0);
+
+    vec3 ambient = vec3(0.,0.25,1.);
+    if (ground){
+        ambient = hit_point2.z<-10?vec3(0.,0.25,1):(int(floor(hit_point2.x)+floor(hit_point2.z))%2==0)?vec3(0.2,0.2,0.2):vec3(0.5,0.5,0.5);
+    } if (light){
+        ambient = vec3(1,1,0);//*vec3(.5,.5,.5)
+        ground = false;
+    } if (sphere && !(transparent)){
+        ambient = sphereColor*vec3(0.02,0.02,0.02);
+        ground = false;
+        //light = false;
+    } 
+    screenColor = vec4(ambient,1.);
+    for(int i=0; i<nLights; i++){
+        if(ground){
+            vec3 hp;
+            vec2 temp = raySphere(hit_point2, (alights[i]-hit_point2), aSpheres[0], 0.4, hp);
+            if (temp.x<temp.y && d(hit_point2,aSpheres[0])<d(hit_point2,alights[i])){
+                screenColor -= vec4(.2,.2,.2,1);
+            }
+        } 
+        if (sphere){
+            vec3 ray2 = alights[i]-hit_point;
+            vec3 ray3 = hit_point-aSpheres[0];
+            
+            float dis = (dot(normalize(ray2),normalize(ray3))+1)/2;
+            float di = (d2(aSpheres[0],hit_point));
+            screenColor += vec4(vec3(dis)*sphereColor*0.5,1.);
+        } 
     }
 }

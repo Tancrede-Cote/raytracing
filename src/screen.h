@@ -1,13 +1,14 @@
 #pragma once
 #include "config.h"
 
-class TriangleMesh {
+class TriangleMesh
+{
 public:
-TriangleMesh();
-void draw();
-~TriangleMesh();
+    TriangleMesh();
+    void draw();
+    ~TriangleMesh();
 
 private:
-unsigned int VAO, vertex_count;
-std::vector<unsigned int> VBOs;
+    unsigned int VAO, vertex_count;
+    std::vector<unsigned int> VBOs;
 };
