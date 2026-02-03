@@ -111,17 +111,18 @@ void App::run()
 	float time;
 	float old;
 	TriangleMesh *triangle = new TriangleMesh();
-	Sphere *sphere = new Sphere();
+	Sphere *sphere = new Sphere(vec3(0, 3, 0));
 	while (!glfwWindowShouldClose(window))
 	{
 		glfwPollEvents();
 
 		glClear(GL_COLOR_BUFFER_BIT);
+		old = time;
 		float temp = static_cast<float>(glfwGetTime());
 		time = temp;
-		dt = time - temp;
+		dt = time - old;
 		glUniform1f(glGetUniformLocation(shader, "time"), time);
-		sphere->update(time);
+		sphere->update(dt);
 		glUniform3fv(glGetUniformLocation(shader, "pos"), 1, (sphere->pos()).value_ptr());
 		triangle->draw();
 		glfwSwapBuffers(window);

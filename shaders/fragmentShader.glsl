@@ -25,58 +25,26 @@ float n(vec3 u){
     return d(u, vec3(0.,0.,0.));
 }
 
-// with a sphere
-bool intersect(vec3 origin, vec3 ray, vec3 center, float r){
-    vec3 L = center-origin;
-    float tca = dot(L,ray)/n(ray);
-    if (tca<0.){
-        return false;
-    }
-    float d = sqrt(n(L)*n(L)-tca*tca);
-    if (d>r){
-        return false;
-    }
-    return true;
-}
-
-vec3 intersectp(vec3 origin, vec3 ray, vec3 center, vec3 normal){
+// Returns .x > .y if no intersection
+vec2 rayPlan(vec3 origin, vec3 ray, vec3 center, vec3 normal, out vec3 res){
     // dot(origin+a*ray-center,normal) = 0
     // dot(origin-center,normal)+a*dot(ray,normal) = 0
     float t0 = -dot(origin-center,normal)/dot(ray,normal);
     if(t0>0){
-        return origin+t0*ray;
+        res = origin+t0*ray;
+        return vec2(-t0,t0);
     }
-    return vec3(0,0,0);
+    res = vec3(0,0,0);
+    return vec2(1e5,-1e5);
 }
 
-vec3 intersect2(vec3 origin, vec3 ray, vec3 center, float r){
-    vec3 L = center-origin;
-    float tca = dot(L,ray)/n(ray);
-    if (tca<0.){
-        return vec3(0.,0.,0.);
+float d(vec3 center, float r, vec3 origin, vec3 normal){ // sphere/plane distance
+    vec3 projection;
+    vec2 temp = rayPlan(center,-normal,origin,normal,projection);
+    if (temp.x>temp.y){
+        vec2 temp = rayPlan(center,normal,origin,normal,projection);
     }
-    float d = sqrt(n(L)*n(L)-tca*tca);
-    if (d>r){
-        return vec3(0.,0.,0.);
-    } else {
-        float t0 = tca - sqrt(r*r-d*d);
-        return origin+t0*ray;
-    }
-}
-
-float intersect3(vec3 origin, vec3 ray, vec3 center, float r){
-    vec3 L = center-origin;
-    float tca = dot(L,ray)/n(ray);
-    if (tca<0.){
-        return 0.;
-    }
-    float d = sqrt(n(L)*n(L)-tca*tca);
-    if (d>r){
-        return 0.;
-    } else {
-        float t0 = tca - sqrt(r*r-d*d);
-        return t0;
-    }
+    return max(0,d(center,projection)-r);
 }
 
 // Returns .x > .y if no intersection
@@ -132,7 +100,8 @@ void main()
     vec3 hit_point;
     
     vec2 inte = raySphere(camPos, ray, pos, 0.4, hit_point);
-    vec3 hit_point2 = intersectp(camPos, ray, vec3(0,0,0), vec3(0,1,0));
+    vec3 hit_point2;
+    rayPlan(camPos, ray, vec3(0,0,0), vec3(0,1,0), hit_point2);
     vec2 t = raySphere(camPos, ray, alights[0], 0.4);
     bool ground = length(hit_point2)>0.;
     bool sphere = inte.x<inte.y;
@@ -151,13 +120,15 @@ void main()
         }
     }
     bool closest = (light_d<d(hit_point, camPos));// true if a light is closer than the sphere
+    bool closest2 = (ground)&&(d(hit_point2,camPos)<d(hit_point, camPos));// true if a plane is closer than the sphere
+    float d_to_plan = d(hit_point,hit_point2);// distance plane/sphere, TODO : adapt for multiple planes/spheres
     vec3 ambient = vec3(0.,0.25,1.);
     if (ground){
         ambient = hit_point2.z<-10?vec3(0.,0.25,1):(int(floor(hit_point2.x)+floor(hit_point2.z))%2==0)?vec3(0.2,0.2,0.2):vec3(0.5,0.5,0.5);
     } if (light){
-        ambient = vec3(.8,.8,0);//*vec3(.5,.5,.5)
+        ambient = vec3(.8,.8,0);
         ground = false;
-    } if (sphere && !(transparent)){
+    } if (sphere  && !closest2 && !(transparent)){
         ambient = sphereColor*vec3(0.02,0.02,0.02);
         ground = false;
     } 
@@ -166,7 +137,7 @@ void main()
         if(ground){
             vec3 hp;
             vec2 temp = raySphere(hit_point2, (alights[i]-hit_point2), pos, 0.4, hp);
-            if (temp.x<temp.y && d(hit_point2,pos)<d(hit_point2,alights[i])){
+            if (hit_point2.z>-10 && temp.x<temp.y && d(hit_point2,pos)<d(hit_point2,alights[i])){
                 screenColor -= vec4(.2,.2,.2,1);
             }
         } 
@@ -176,7 +147,9 @@ void main()
             
             float dis = (dot(normalize(ray2),normalize(ray3))+1)/2;
             float di = (d2(pos,hit_point));
-            screenColor += vec4(vec3(dis)*sphereColor*0.5,1.);
+            if (hit_point.y>=0.){
+                screenColor += vec4(vec3(dis)*sphereColor*0.5,1.);
+            }
         } 
     }
     if (closest){

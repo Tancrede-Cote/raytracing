@@ -2,6 +2,65 @@
 #include <cmath>
 #include <iostream>
 
+class vec2
+{
+public:
+    union
+    {
+        struct
+        {
+            float x;
+            float y;
+        };
+        struct
+        {
+            float content[2];
+        };
+    };
+
+    vec2() {}
+    vec2(float x, float y) : x(x), y(y) {}
+    vec2(float l) : x(l), y(l) {}
+    ~vec2() {}
+    float dot(vec2 u) { return x * u.x + y * u.y; }
+    void normalize()
+    {
+        float n = sqrtf(x * x + y * y);
+        x = x / n;
+        y = y / n;
+    }
+    vec2 normalized()
+    {
+        float n = sqrtf(x * x + y * y);
+        return vec2(x / n, y / n);
+    }
+    float norm()
+    {
+        float n = sqrtf(x * x + y * y);
+        return n;
+    }
+    vec2 operator+(vec2 u) { return vec2(x + u.x, y + u.y); }
+    vec2 operator-(vec2 u) { return vec2(x - u.x, y - u.y); }
+    vec2 operator-() { return vec2(-x, -y); }
+    void operator+=(vec2 u)
+    {
+        x += u.x;
+        y += u.y;
+    }
+    void operator-=(vec2 u)
+    {
+        x -= u.x;
+        y -= u.y;
+    }
+    vec2 operator*(float f) { return vec2(x * f, y * f); }
+    float *value_ptr()
+    {
+        return content;
+    }
+    friend vec2 operator*(float, vec2);
+    // friend std::ostream& operator<<(std::ostream, vec3&);
+};
+
 class vec3
 {
 public:
@@ -21,6 +80,7 @@ public:
 
     vec3() {}
     vec3(float x, float y, float z) : x(x), y(y), z(z) {}
+    vec3(float l) : x(l), y(l), z(l) {}
     ~vec3() {}
     float dot(vec3 u) { return x * u.x + y * u.y + z * u.z; }
     vec3 cross(vec3 u) { return vec3(y * u.z - z * u.y, z * u.x - x * u.z, x * u.y - y * u.x); }
@@ -43,6 +103,7 @@ public:
     }
     vec3 operator+(vec3 u) { return vec3(x + u.x, y + u.y, z + u.z); }
     vec3 operator-(vec3 u) { return vec3(x - u.x, y - u.y, z - u.z); }
+    vec3 operator-() { return vec3(-x, -y, -z); }
     void operator+=(vec3 u)
     {
         x += u.x;
@@ -56,6 +117,9 @@ public:
         z -= u.z;
     }
     vec3 operator*(float f) { return vec3(x * f, y * f, z * f); }
+    void operator*=(float f) { (*this) = (*this) * f; }
+    vec3 operator/(float f) { return (*this) * (1 / f); }
+    float d(vec3 u) { return (*this - u).norm(); } // distance between vectors viewed as points
     float *value_ptr()
     {
         return content;
@@ -85,6 +149,7 @@ public:
     vec4() {}
     vec4(float x, float y, float z) : x(x), y(y), z(z) {}
     vec4(float x, float y, float z, float w) : x(x), y(y), z(z), w(w) {}
+    vec4(float l) : x(l), y(l), z(l), w(l) {}
     ~vec4() {}
     vec4(vec3 &v)
     {
