@@ -107,14 +107,22 @@ unsigned int App::make_entity()
 
 void App::run()
 {
+	float dt = 0.016;
+	float time;
+	float old;
 	TriangleMesh *triangle = new TriangleMesh();
+	Sphere *sphere = new Sphere();
 	while (!glfwWindowShouldClose(window))
 	{
 		glfwPollEvents();
 
 		glClear(GL_COLOR_BUFFER_BIT);
-
-		glUniform1f(glGetUniformLocation(shader, "time"), static_cast<float>(glfwGetTime()));
+		float temp = static_cast<float>(glfwGetTime());
+		time = temp;
+		dt = time - temp;
+		glUniform1f(glGetUniformLocation(shader, "time"), time);
+		sphere->update(time);
+		glUniform3fv(glGetUniformLocation(shader, "pos"), 1, (sphere->pos()).value_ptr());
 		triangle->draw();
 		glfwSwapBuffers(window);
 		// motionSystem->update(
@@ -213,8 +221,4 @@ void App::set_up_opengl()
 	glUniform3fv(camPosLocation, 1, camPos.value_ptr());
 	glUniform1i(hLocation, h);
 	glUniform1i(wLocation, w);
-	// unsigned int projLocation = glGetUniformLocation(shader, "projection");
-	// mat4 projection = mat4F::perspective(
-	// 	45.0f, 1.f, 0.1f, 10.0f);
-	// glUniformMatrix4fv(projLocation, 1, GL_FALSE, projection.value_ptr());
 }

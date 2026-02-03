@@ -6,6 +6,7 @@ in vec3 fragPos;
 out vec4 screenColor;
 
 uniform vec3 camPos;
+uniform vec3 pos;
 uniform float time;
 
 uniform int w;
@@ -129,45 +130,56 @@ void main()
     float fov = 70.;
     vec3 ray = vec3(uv.xy, -2. / tan(fov));
     vec3 hit_point;
-    vec2 inte = raySphere(camPos, ray, aSpheres[0], 0.4, hit_point);
+    
+    vec2 inte = raySphere(camPos, ray, pos, 0.4, hit_point);
     vec3 hit_point2 = intersectp(camPos, ray, vec3(0,0,0), vec3(0,1,0));
     vec2 t = raySphere(camPos, ray, alights[0], 0.4);
     bool ground = length(hit_point2)>0.;
     bool sphere = inte.x<inte.y;
     bool light = false;
-    bool transparent = false;
-    for(int i=0; i<nLights; i++){
-        vec2 t = raySphere(camPos, ray, alights[i], 0.4);
-        light=light||(t.x<t.y);
-    }
+    float light_d = 30000;
+    vec3 hit_light;
 
+    bool transparent = false;
+
+
+    for(int i=0; i<nLights; i++){
+        vec2 t = raySphere(camPos, ray, alights[i], 0.4,hit_light);
+        light=light||(t.x<t.y);
+        if (t.x<t.y){
+            light_d=min(light_d,d(camPos,hit_light));
+        }
+    }
+    bool closest = (light_d<d(hit_point, camPos));// true if a light is closer than the sphere
     vec3 ambient = vec3(0.,0.25,1.);
     if (ground){
         ambient = hit_point2.z<-10?vec3(0.,0.25,1):(int(floor(hit_point2.x)+floor(hit_point2.z))%2==0)?vec3(0.2,0.2,0.2):vec3(0.5,0.5,0.5);
     } if (light){
-        ambient = vec3(1,1,0);//*vec3(.5,.5,.5)
+        ambient = vec3(.8,.8,0);//*vec3(.5,.5,.5)
         ground = false;
     } if (sphere && !(transparent)){
         ambient = sphereColor*vec3(0.02,0.02,0.02);
         ground = false;
-        //light = false;
     } 
     screenColor = vec4(ambient,1.);
     for(int i=0; i<nLights; i++){
         if(ground){
             vec3 hp;
-            vec2 temp = raySphere(hit_point2, (alights[i]-hit_point2), aSpheres[0], 0.4, hp);
-            if (temp.x<temp.y && d(hit_point2,aSpheres[0])<d(hit_point2,alights[i])){
+            vec2 temp = raySphere(hit_point2, (alights[i]-hit_point2), pos, 0.4, hp);
+            if (temp.x<temp.y && d(hit_point2,pos)<d(hit_point2,alights[i])){
                 screenColor -= vec4(.2,.2,.2,1);
             }
         } 
         if (sphere){
             vec3 ray2 = alights[i]-hit_point;
-            vec3 ray3 = hit_point-aSpheres[0];
+            vec3 ray3 = hit_point-pos;
             
             float dis = (dot(normalize(ray2),normalize(ray3))+1)/2;
-            float di = (d2(aSpheres[0],hit_point));
+            float di = (d2(pos,hit_point));
             screenColor += vec4(vec3(dis)*sphereColor*0.5,1.);
         } 
+    }
+    if (closest){
+        screenColor = vec4(.8,.8,0.,1.);
     }
 }

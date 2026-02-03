@@ -11,6 +11,7 @@ add_executable(
     src/math.cpp
     src/init.cpp
     src/screen.cpp
+    src/physics.cpp
 
 )
 
