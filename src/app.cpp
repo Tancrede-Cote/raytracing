@@ -1,15 +1,21 @@
 #include "config.h"
 
 float f = 16.67 / 1000.f;
+float r = 0.1;
+float lr = 0.3; // light radius
 int w = 1280;
 int h = 720;
 vec3 camPos(0.f, 1.f, 3.f);
+vec3 plane(.5f, 1.f, .5f);
 vec3 camOrientation(0.f, 0.f, -1.f); // unused for now
 
 unsigned int camPosLocation;
+unsigned int planeLocation;
 
 unsigned int hLocation;
 unsigned int wLocation;
+unsigned int rLocation;
+unsigned int lrLocation;
 
 unsigned int make_module(const std::string &filepath, unsigned int module_type)
 {
@@ -112,6 +118,10 @@ void App::run()
 	float old;
 	TriangleMesh *triangle = new TriangleMesh();
 	Sphere *sphere = new Sphere(vec3(0, 3, 0));
+	rLocation = glGetUniformLocation(shader, "r");
+	glUniform1f(rLocation, r);
+	lrLocation = glGetUniformLocation(shader, "lr");
+	glUniform1f(lrLocation, lr);
 	while (!glfwWindowShouldClose(window))
 	{
 		glfwPollEvents();
@@ -215,11 +225,13 @@ void App::set_up_opengl()
 		"../shaders/vertexShader.glsl",
 		"../shaders/fragmentShader.glsl");
 
+	planeLocation = glGetUniformLocation(shader, "plane");
 	camPosLocation = glGetUniformLocation(shader, "camPos");
 	hLocation = glGetUniformLocation(shader, "h");
 	wLocation = glGetUniformLocation(shader, "w");
 	glUseProgram(shader);
 	glUniform3fv(camPosLocation, 1, camPos.value_ptr());
+	glUniform3fv(planeLocation, 1, plane.value_ptr());
 	glUniform1i(hLocation, h);
 	glUniform1i(wLocation, w);
 }

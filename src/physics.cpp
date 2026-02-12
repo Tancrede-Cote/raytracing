@@ -1,27 +1,43 @@
 #include "config.h"
 
+extern vec3 plane;
+
 void Sphere::update(float dt) // mauvaise manière de faire, faire resting/not resting/no collision
 {
-    if (d(vec3(0, 0, 0), vec3(0, 1, 0)) == 0 && !(collide))
+    /*
+    if()
+    */
+    if (d(vec3(0, 0, 0), plane) == 0) // collide
     {
-        collide = true;
-        float n = v.norm();
-        v = vec3(0, .5, 0) * (n);
-        _pos += v * (1.1f * dt);
+        vec3 newv = v - plane * (2 * v.dot(plane)) / m;
+        if (newv.dot(plane) > 0) // not resting
+        {
+            v -= plane * (2 * v.dot(plane)) / 1.5;
+            _pos += v * (1.f * dt);
+            std::cout << 0 << std::endl;
+        }
+        else
+        { // resting
+            F -= plane.normalized() * F.dot(plane) / plane.norm();
+            std::cout << "gjfgjfgj" << F.dot(plane) << std::endl;
+            a = F / m;
+            v += a * dt;
+            _pos += v * (1.f * dt);
+        }
     }
-    else if (d(vec3(0, 0, 0), vec3(0, 1, 0)) == 0 && v.norm() < 0.1)
+    else if (d(vec3(0, 0, 0), plane) == 0 && v.norm() < 0.1)
     {
         F = vec3(0);
-        a = F;
+        a = F / m;
         v = vec3(0);
     }
     else
     {
         collide = false;
         F = vec3(0, -9.81, 0);
-        a = F;
+        a = F / m;
         v += a * dt;
-        _pos += v * (1.1f * dt);
+        _pos += v * (1.f * dt);
     }
 }
 

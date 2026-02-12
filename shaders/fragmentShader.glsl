@@ -8,6 +8,9 @@ out vec4 screenColor;
 uniform vec3 camPos;
 uniform vec3 pos;
 uniform float time;
+uniform vec3 plane;
+uniform float r;
+uniform float lr;
 
 uniform int w;
 uniform int h;
@@ -99,10 +102,10 @@ void main()
     vec3 ray = vec3(uv.xy, -2. / tan(fov));
     vec3 hit_point;
     
-    vec2 inte = raySphere(camPos, ray, pos, 0.4, hit_point);
+    vec2 inte = raySphere(camPos, ray, pos, r, hit_point);
     vec3 hit_point2;
-    rayPlan(camPos, ray, vec3(0,0,0), vec3(0,1,0), hit_point2);
-    vec2 t = raySphere(camPos, ray, alights[0], 0.4);
+    rayPlan(camPos, ray, vec3(0,0,0), plane, hit_point2);
+    vec2 t = raySphere(camPos, ray, alights[0], r);
     bool ground = length(hit_point2)>0.;
     bool sphere = inte.x<inte.y;
     bool light = false;
@@ -113,7 +116,7 @@ void main()
 
 
     for(int i=0; i<nLights; i++){
-        vec2 t = raySphere(camPos, ray, alights[i], 0.4,hit_light);
+        vec2 t = raySphere(camPos, ray, alights[i], lr,hit_light);
         light=light||(t.x<t.y);
         if (t.x<t.y){
             light_d=min(light_d,d(camPos,hit_light));
@@ -136,7 +139,7 @@ void main()
     for(int i=0; i<nLights; i++){
         if(ground){
             vec3 hp;
-            vec2 temp = raySphere(hit_point2, (alights[i]-hit_point2), pos, 0.4, hp);
+            vec2 temp = raySphere(hit_point2, (alights[i]-hit_point2), pos, r, hp);
             if (hit_point2.z>-10 && temp.x<temp.y && d(hit_point2,pos)<d(hit_point2,alights[i])){
                 screenColor -= vec4(.2,.2,.2,1);
             }
