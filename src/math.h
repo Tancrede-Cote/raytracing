@@ -84,6 +84,7 @@ public:
     ~vec3() {}
     float dot(vec3 u) { return x * u.x + y * u.y + z * u.z; }
     vec3 cross(vec3 u) { return vec3(y * u.z - z * u.y, z * u.x - x * u.z, x * u.y - y * u.x); }
+    vec3 copy() { return vec3(x, y, z); }
     void normalize()
     {
         float n = sqrtf(x * x + y * y + z * z);

@@ -6,8 +6,11 @@ float lr = 0.3; // light radius
 int w = 1280;
 int h = 720;
 vec3 camPos(0.f, 1.f, 3.f);
-vec3 plane(.5f, 1.f, .0f);
-vec3 camOrientation(0.f, 0.f, -1.f); // unused for now
+vec3 plane(.1f, 1.f, .0f);
+vec3 pa = vec3(1, 0, -1);
+vec3 b = vec3(-1, 0, -1);
+vec3 c = vec3(0, 1, -1);
+bool jump = false;
 
 unsigned int camPosLocation;
 unsigned int planeLocation;
@@ -117,7 +120,7 @@ void App::run()
 	float time;
 	float old;
 	TriangleMesh *triangle = new TriangleMesh();
-	Sphere *sphere = new Sphere(vec3(0, 3, 0), shader);
+	Sphere *sphere = new Sphere(vec3(0, 2, 0), shader);
 	rLocation = glGetUniformLocation(shader, "r");
 	glUniform1f(rLocation, sphere->r);
 	lrLocation = glGetUniformLocation(shader, "lr");
@@ -132,51 +135,16 @@ void App::run()
 		time = temp;
 		dt = time - old;
 		glUniform1f(glGetUniformLocation(shader, "time"), time);
+		sphere->jump = jump;
 		sphere->update(dt);
+		jump = false;
 		glUniform3fv(glGetUniformLocation(shader, "pos"), 1, (sphere->pos()).value_ptr());
 		triangle->draw();
 		glfwSwapBuffers(window);
-		// motionSystem->update(
-		//     transformComponents, physicsComponents, f);
-		// bool should_close = cameraSystem->update(
-		//     transformComponents, cameraID, *cameraComponent, f);
-		// if (should_close){
-		//     break;
-		// }
-
-		// renderSystem->update(transformComponents, renderComponents);
 	}
-}
-
-unsigned int App::make_texture(const char *filename)
-{
-	return 0;
-	// std::cout << filename << std::endl;
-	// int width, height, channels;
-	// stbi_set_flip_vertically_on_load(true);
-	// unsigned char* data = stbi_load(
-	//     filename, &width, &height, &channels, STBI_rgb_alpha);
-
-	// //make the texture
-	// unsigned int texture;
-	// glGenTextures(1, &texture);
-	// textures.push_back(texture);
-	// glBindTexture(GL_TEXTURE_2D, texture);
-
-	// //load data
-	// glTexImage2D(GL_TEXTURE_2D,
-	//     0, GL_RGBA, width, height, 0,
-	//     GL_RGBA, GL_UNSIGNED_BYTE, data);
-
-	// //free data
-	// stbi_image_free(data);
-
-	// //Configure sampler
-	// glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-	// glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-	// glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	// glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	// return texture;
+	glDeleteProgram(shader);
+	glfwDestroyWindow(window);
+	// glfwTerminate();
 }
 
 void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods)
@@ -184,6 +152,11 @@ void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods
 	if (action == GLFW_PRESS && key == GLFW_KEY_ESCAPE)
 	{
 		glfwSetWindowShouldClose(window, true); // Closes the application if the escape key is pressed
+	}
+	else if (action == GLFW_PRESS && key == GLFW_KEY_SPACE)
+	{
+		std::cout << "JUMP" << std::endl;
+		jump = true;
 	}
 }
 
@@ -234,4 +207,7 @@ void App::set_up_opengl()
 	glUniform3fv(planeLocation, 1, plane.value_ptr());
 	glUniform1i(hLocation, h);
 	glUniform1i(wLocation, w);
+	glUniform3fv(glGetUniformLocation(shader, "a"), 1, pa.value_ptr());
+	glUniform3fv(glGetUniformLocation(shader, "b"), 1, b.value_ptr());
+	glUniform3fv(glGetUniformLocation(shader, "c"), 1, c.value_ptr());
 }

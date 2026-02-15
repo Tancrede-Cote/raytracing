@@ -11,6 +11,14 @@ uniform float time;
 uniform vec3 plane;
 uniform float r;
 uniform float lr;
+uniform vec3 a;
+uniform vec3 b;
+uniform vec3 c;
+vec3 ma = vec3(3, 0, -2);
+vec3 mb = vec3(3, 2, 2);
+vec3 mc = vec3(3, 2, -2);
+vec3 md = vec3(3, 0, 2);
+
 
 uniform int w;
 uniform int h;
@@ -81,6 +89,28 @@ vec3 raySphere2(vec3 rayPos, vec3 rayDir, vec3 sphPos, float radius)
     return rayPos+(-2. * dot(p, rayDir) - sqrt(delta)) / (2. * dot(rayDir, rayDir))*rayDir;
 }
 
+float area(vec3 a, vec3 b, vec3 c){// area of triangle abc
+    return 0.5*length(cross(b-a,c-a));
+}
+
+vec2 rayTriangle(vec3 origin, vec3 ray, vec3 a, vec3 b, vec3 c, out vec3 res){
+    vec3 normal = normalize(cross(b-a,c-a));
+    float t0 = -dot(origin-a,normal)/dot(ray,normal);
+    if(t0>0){
+        res = origin+t0*ray;
+        float l1 = area(a,b,res)/area(a,b,c);
+        float l2 = area(a,c,res)/area(a,b,c);
+        float l3 = area(c,b,res)/area(a,b,c);
+        if (l1+l2+l3>1.01){
+            res = vec3(0,0,0);
+            return vec2(1e5,-1e5);
+        }
+        return vec2(-t0,t0);
+    }
+    res = vec3(0,0,0);
+    return vec2(1e5,-1e5);
+}
+
 mat2 rot2D(float theta)
 {
     return mat2(vec2(cos(theta), -sin(theta)), vec2(sin(theta), cos(theta)));
@@ -90,10 +120,11 @@ void main()
 {
 
     vec3 sphereColor = vec3(1, 0., 0.);
+    vec3 triangleColor = vec3(0.2,0.7,0.2);
     int nSpheres = 2;
     vec3 aSpheres[2] = vec3[](vec3(sin(time/3), 0.5, 0.),vec3(-0.5,0.,-0.5));
     int nLights = 2;
-    vec3 alights[2] = vec3[](vec3(sin(time), 1.3, -1.),vec3(1., sin(time)/2+1, -1.));
+    vec3 alights[2] = vec3[](vec3(sin(time), 1.3, -1.),vec3(1., sin(time)/2+1.5, -1.));
     vec3 omniLight = vec3(sin(time), 1.3, -1.);
     omniLight.xz *= rot2D(time);
     alights[0].xz *= rot2D(time);
@@ -107,14 +138,25 @@ void main()
     vec2 p = rayPlan(camPos, ray, vec3(0,0,0), plane, hit_point2);
     vec2 t = raySphere(camPos, ray, alights[0], r);
     bool ground = p.x<p.y;
-    bool sphere = inte.x<inte.y;
+    bool sphere = inte.x<inte.y&&hit_point.z<=3;
     bool light = false;
     float light_d = 30000;
     vec3 hit_light;
 
     bool transparent = false;
+    // vec3 a = vec3(-2,1,0);
+    // vec3 b = vec3(1,0,1.5);
+    // vec3 c = vec3(-.5,1,2);
+    vec3 triangle_hit;
+    vec2 tri_inter = rayTriangle(camPos,ray,a,b,c,triangle_hit);
+    vec3 mirror_hit_point;
+    vec2 mirror_inter = rayTriangle(camPos,ray,ma,mb,mc,mirror_hit_point);
+    if (mirror_inter.x>mirror_inter.y){
+        mirror_inter = rayTriangle(camPos,ray,ma,mb,md,mirror_hit_point);
+    }
+    bool mirror = mirror_inter.x<=mirror_inter.y;
 
-
+    bool triangle = tri_inter.x<tri_inter.y;
     for(int i=0; i<nLights; i++){
         vec2 t = raySphere(camPos, ray, alights[i], lr,hit_light);
         light=light||(t.x<t.y);
@@ -130,11 +172,16 @@ void main()
     } if (light){
         ambient = vec3(.8,.8,0);
         ground = false;
-    } if (sphere  && !closest2 && !(transparent)){
+    } 
+    // if (triangle){
+    //     ambient = triangleColor;
+    // } 
+    if (sphere  && !closest2 && !(transparent)){
         ambient = sphereColor*vec3(0.02,0.02,0.02);
         ground = false;
     } 
     screenColor = vec4(ambient,1.);
+    
     for(int i=0; i<nLights; i++){
         if(ground){
             vec3 hp;
@@ -142,7 +189,18 @@ void main()
             if (hit_point2.z>-10 && temp.x<temp.y && d(hit_point2,pos)<d(hit_point2,alights[i])){
                 screenColor -= vec4(.2,.2,.2,1);
             }
+            // vec2 temp2 = rayTriangle(hit_point2,(alights[i]-hit_point2),a,b,c,hp);
+            // if (!triangle && hit_point2.z>-10 && temp2.x<temp2.y && d(hit_point2,pos)<d(hit_point2,alights[i])){
+            //     screenColor -= vec4(.2,.2,.2,1);
+            // }
         } 
+        // if(triangle&&!sphere){
+        //     vec3 ray2 = alights[i]-hit_point;
+        //     vec3 ray3 = hit_point-pos;
+            
+        //     float dis = (dot(normalize(ray2),normalize(ray3))+1)/2;
+        //     screenColor += vec4(vec3(dis)*triangleColor,1.);
+        // }
         if (sphere){
             vec3 ray2 = alights[i]-hit_point;
             vec3 ray3 = hit_point-pos;
