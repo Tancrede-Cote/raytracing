@@ -7,29 +7,25 @@ void Sphere::update(float dt) // mauvaise manière de faire, faire resting/not r
     /*
     if()
     */
+    dt /= 3;
     if (d(vec3(0, 0, 0), plane) == 0) // collide
     {
         vec3 newv = v - plane * (2 * v.dot(plane)) / m;
-        if (newv.dot(plane) > 0) // not resting
+        if (v.dot(plane) < -0.) // not resting
         {
-            v -= plane * (2 * v.dot(plane)) / 1.5;
+            v -= plane * (2 * v.dot(plane)) / m;
             _pos += v * (1.f * dt);
             std::cout << 0 << std::endl;
         }
         else
         { // resting
             F -= plane.normalized() * F.dot(plane) / plane.norm();
-            std::cout << "gjfgjfgj" << F.dot(plane) << std::endl;
+            std::cout << "gjfgjfgj" << v.norm() << std::endl;
             a = F / m;
             v += a * dt;
+            // v = 0;
             _pos += v * (1.f * dt);
         }
-    }
-    else if (d(vec3(0, 0, 0), plane) == 0 && v.norm() < 0.1)
-    {
-        F = vec3(0);
-        a = F / m;
-        v = vec3(0);
     }
     else
     {

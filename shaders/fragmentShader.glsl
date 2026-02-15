@@ -88,7 +88,7 @@ mat2 rot2D(float theta)
 
 void main()
 {
-    vec3 sphereCenter = vec3(sin(time/3), 0.5, 0.);
+
     vec3 sphereColor = vec3(1, 0., 0.);
     int nSpheres = 2;
     vec3 aSpheres[2] = vec3[](vec3(sin(time/3), 0.5, 0.),vec3(-0.5,0.,-0.5));
@@ -104,9 +104,9 @@ void main()
     
     vec2 inte = raySphere(camPos, ray, pos, r, hit_point);
     vec3 hit_point2;
-    rayPlan(camPos, ray, vec3(0,0,0), plane, hit_point2);
+    vec2 p = rayPlan(camPos, ray, vec3(0,0,0), plane, hit_point2);
     vec2 t = raySphere(camPos, ray, alights[0], r);
-    bool ground = length(hit_point2)>0.;
+    bool ground = p.x<p.y;
     bool sphere = inte.x<inte.y;
     bool light = false;
     float light_d = 30000;
@@ -124,7 +124,6 @@ void main()
     }
     bool closest = (light_d<d(hit_point, camPos));// true if a light is closer than the sphere
     bool closest2 = (ground)&&(d(hit_point2,camPos)<d(hit_point, camPos));// true if a plane is closer than the sphere
-    float d_to_plan = d(hit_point,hit_point2);// distance plane/sphere, TODO : adapt for multiple planes/spheres
     vec3 ambient = vec3(0.,0.25,1.);
     if (ground){
         ambient = hit_point2.z<-10?vec3(0.,0.25,1):(int(floor(hit_point2.x)+floor(hit_point2.z))%2==0)?vec3(0.2,0.2,0.2):vec3(0.5,0.5,0.5);
@@ -149,8 +148,7 @@ void main()
             vec3 ray3 = hit_point-pos;
             
             float dis = (dot(normalize(ray2),normalize(ray3))+1)/2;
-            float di = (d2(pos,hit_point));
-            if (hit_point.y>=0.){
+            if (!closest2){
                 screenColor += vec4(vec3(dis)*sphereColor*0.5,1.);
             }
         } 
