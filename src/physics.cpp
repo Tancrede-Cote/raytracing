@@ -10,14 +10,21 @@ void Sphere::update(float dt)
     /*
     if()
     */
-    // dt /= 3;
+    dt /= 3;
     vec3 normal = (b - pa).cross(c - pa).normalized();
     if (normal.z < 0)
     {
         normal = -normal;
     }
-    if (d(vec3(0, 0, 0), plane) == 0) // collide
+    float dp = d(vec3(0, 0, 0), plane);
+    if (dp <= 0) // collide
     {
+        if (dp < -0.01)
+        {
+            plane.print();
+            std::cout << std::endl;
+            _pos -= plane * (1.f * dp);
+        }
         if (v.dot(plane) < -0.1) // not resting
         {
             v -= plane * (2 * v.dot(plane)) / m;
@@ -25,6 +32,7 @@ void Sphere::update(float dt)
         }
         else
         { // resting
+            // std::cout << "aaaaa" << std::endl;
             F -= plane.normalized() * F.dot(plane) / plane.norm();
             a = F / m; //- v * m;
             v = jump ? v + a * dt + vec3(0, 5, 0) : (v.norm() <= 0.2 ? vec3(0) : v + a * dt);
@@ -49,6 +57,7 @@ void Sphere::update(float dt)
     // }
     else
     {
+        // std::cout << "fdhdf" << std::endl;
         F = vec3(0, -9.81, 0);
         a = F / m - v * m;
         v += a * dt;
@@ -94,5 +103,5 @@ float Sphere::d(vec3 origin, vec3 normal)
     {
         temp = rayPlan(_pos, -normal, origin, normal);
     }
-    return (_pos.d(temp) > r) ? (_pos.d(temp) - r) : 0.;
+    return (_pos.d(temp) - r);
 }

@@ -82,6 +82,7 @@ public:
     vec3(float x, float y, float z) : x(x), y(y), z(z) {}
     vec3(float l) : x(l), y(l), z(l) {}
     ~vec3() {}
+    float operator[](int);
     float dot(vec3 u) { return x * u.x + y * u.y + z * u.z; }
     vec3 cross(vec3 u) { return vec3(y * u.z - z * u.y, z * u.x - x * u.z, x * u.y - y * u.x); }
     vec3 copy() { return vec3(x, y, z); }
@@ -125,6 +126,7 @@ public:
     {
         return content;
     }
+    void print() { std::cout << x << " " << y << " " << z; }
     friend vec3 operator*(float, vec3);
     // friend std::ostream& operator<<(std::ostream, vec3&);
 };
@@ -179,6 +181,22 @@ public:
         z = z / n;
         w = w / n;
     }
+};
+
+class mat3
+{
+private:
+    float content[9]{};
+
+public:
+    float *value_ptr() { return content; }
+    vec3 operator[](int);
+    mat3(float);
+    mat3(vec3, vec3, vec3);
+    void print();
+    float *get();
+    mat3 operator*(mat3 A);
+    vec3 operator*(vec3 v) { return vec3(content[0] * v.x + content[1] * v.y + content[2] * v.z, content[3] * v.x + content[4] * v.y + content[5] * v.z, content[6] * v.x + content[7] * v.y + content[8] * v.z); }
 };
 
 class mat4

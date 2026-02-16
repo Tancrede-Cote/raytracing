@@ -6,11 +6,12 @@ float lr = 0.3; // light radius
 int w = 1280;
 int h = 720;
 vec3 camPos(0.f, 1.f, 3.f);
-vec3 plane(.1f, 1.f, .0f);
+vec3 plane(.0f, 1.f, .0f);
 vec3 pa = vec3(1, 0, -1);
 vec3 b = vec3(-1, 0, -1);
 vec3 c = vec3(0, 1, -1);
 bool jump = false;
+Sphere *sphere;
 
 unsigned int camPosLocation;
 unsigned int planeLocation;
@@ -19,6 +20,12 @@ unsigned int hLocation;
 unsigned int wLocation;
 unsigned int rLocation;
 unsigned int lrLocation;
+
+float g_meshScale = 1.0; // to update based on the mesh size, so that navigation runs at scale
+bool g_rotatingP = false;
+bool g_panningP = false;
+bool g_zoomingP = false;
+double g_baseX = 0.0, g_baseY = 0.0;
 
 unsigned int make_module(const std::string &filepath, unsigned int module_type)
 {
@@ -120,7 +127,7 @@ void App::run()
 	float time;
 	float old;
 	TriangleMesh *triangle = new TriangleMesh();
-	Sphere *sphere = new Sphere(vec3(0, 2, 0), shader);
+	sphere = new Sphere(vec3(0, 2, 0), shader);
 	rLocation = glGetUniformLocation(shader, "r");
 	glUniform1f(rLocation, sphere->r);
 	lrLocation = glGetUniformLocation(shader, "lr");
@@ -130,6 +137,7 @@ void App::run()
 		glfwPollEvents();
 
 		glClear(GL_COLOR_BUFFER_BIT);
+		glUniform3fv(planeLocation, 1, plane.value_ptr());
 		old = time;
 		float temp = static_cast<float>(glfwGetTime());
 		time = temp;
@@ -160,6 +168,39 @@ void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods
 	}
 }
 
+void mouseButtonCallback(GLFWwindow *window, int button, int action, int mods)
+{
+	if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS)
+	{
+		// std::cout << "fdglihdsf" << std::endl;
+		if (!g_rotatingP)
+		{
+			g_rotatingP = true;
+			glfwGetCursorPos(window, &g_baseX, &g_baseY);
+		}
+	}
+	else if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_RELEASE)
+	{
+		g_rotatingP = false;
+	}
+}
+
+void cursorPosCallback(GLFWwindow *window, double xpos, double ypos)
+{
+	int width, height;
+	glfwGetWindowSize(window, &width, &height);
+	const float normalizer = static_cast<float>((width + height) / 2);
+	const float dx = static_cast<float>((g_baseX - xpos) / normalizer);
+	const float dy = static_cast<float>((ypos - g_baseY) / normalizer);
+	if (g_rotatingP)
+	{
+		mat3 RotX(vec3(1, 0, 0), vec3(0, cos(-dy * M_PI / 100), -sin(-dy * M_PI / 100)), vec3(0, sin(-dy * M_PI / 100), cos(-dy * M_PI / 100)));
+		mat3 RotZ(vec3(cos(-dx * M_PI / 100), -sin(-dx * M_PI / 100), 0), vec3(sin(-dx * M_PI / 100), cos(-dx * M_PI / 100), 0), vec3(0, 0, 1));
+		plane = (RotX)*plane;
+		sphere->_pos = RotX * sphere->_pos;
+	}
+}
+
 void App::set_up_glfw()
 {
 
@@ -173,6 +214,8 @@ void App::set_up_glfw()
 	glfwMakeContextCurrent(window);
 	// glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
 	glfwSetKeyCallback(window, keyCallback);
+	glfwSetCursorPosCallback(window, cursorPosCallback);
+	glfwSetMouseButtonCallback(window, mouseButtonCallback);
 
 	if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
 	{
@@ -204,7 +247,6 @@ void App::set_up_opengl()
 	wLocation = glGetUniformLocation(shader, "w");
 	glUseProgram(shader);
 	glUniform3fv(camPosLocation, 1, camPos.value_ptr());
-	glUniform3fv(planeLocation, 1, plane.value_ptr());
 	glUniform1i(hLocation, h);
 	glUniform1i(wLocation, w);
 	glUniform3fv(glGetUniformLocation(shader, "a"), 1, pa.value_ptr());
