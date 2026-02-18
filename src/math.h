@@ -58,7 +58,6 @@ public:
         return content;
     }
     friend vec2 operator*(float, vec2);
-    // friend std::ostream& operator<<(std::ostream, vec3&);
 };
 
 class vec3
@@ -193,10 +192,28 @@ public:
     vec3 operator[](int);
     mat3(float);
     mat3(vec3, vec3, vec3);
+    mat3(float, float, float, float, float, float, float, float, float);
     void print();
     float *get();
     mat3 operator*(mat3 A);
     vec3 operator*(vec3 v) { return vec3(content[0] * v.x + content[1] * v.y + content[2] * v.z, content[3] * v.x + content[4] * v.y + content[5] * v.z, content[6] * v.x + content[7] * v.y + content[8] * v.z); }
+    static mat3 rotation(vec3 axis, float angle)
+    {
+        vec3 up(0., 1., 0.), naxis = axis.normalized();
+        float de = sin(angle), ph = cos(angle);
+        if (fabsf(naxis.y) > 0.999) // rotation around (Oy), no change of basis is needed
+            return mat3(cosf(angle), 0., -sinf(angle),
+                        0., 1., 0.,
+                        sinf(angle), 0., cosf(angle));
+        float lbd = 1. / sqrtf(1. - naxis.y);
+        vec3 abc = ((up - naxis * naxis.y) * lbd).normalized();
+        vec3 cr = abc.cross(naxis);
+
+        // change of basis then rotation around (Oy) then re-change of basis (product of 3 matrices)
+        return mat3((abc.x * ph - cr.x * de) * abc.x + naxis.x * naxis.x + (abc.x * de + cr.x * ph) * cr.x, (abc.y * ph - cr.y * de) * abc.x + naxis.x * naxis.y + (abc.y * de + cr.y * ph) * cr.x, (abc.z * ph - cr.z * de) * abc.x + naxis.x * naxis.z + (abc.z * de + cr.z * ph) * cr.x,
+                    (abc.x * ph - cr.x * de) * abc.y + naxis.y * naxis.x + (abc.x * de + cr.x * ph) * cr.y, (abc.y * ph - cr.y * de) * abc.y + naxis.y * naxis.y + (abc.y * de + cr.y * ph) * cr.y, (abc.z * ph - cr.z * de) * abc.y + naxis.y * naxis.z + (abc.z * de + cr.z * ph) * cr.y,
+                    (abc.x * ph - cr.x * de) * abc.z + naxis.z * naxis.x + (abc.x * de + cr.x * ph) * cr.z, (abc.y * ph - cr.y * de) * abc.z + naxis.z * naxis.y + (abc.y * de + cr.y * ph) * cr.z, (abc.z * ph - cr.z * de) * abc.z + naxis.z * naxis.z + (abc.z * de + cr.z * ph) * cr.z);
+    }
 };
 
 class mat4

@@ -66,6 +66,19 @@ mat3::mat3(vec3 a, vec3 b, vec3 c)
     }
 }
 
+mat3::mat3(float a, float b, float c, float d, float e, float f, float g, float h, float i)
+{
+    content[0] = a;
+    content[1] = b;
+    content[2] = c;
+    content[3] = d;
+    content[4] = e;
+    content[5] = f;
+    content[6] = g;
+    content[7] = h;
+    content[8] = i;
+}
+
 vec3 mat3::operator[](int i)
 { // returns line i
     switch (i)

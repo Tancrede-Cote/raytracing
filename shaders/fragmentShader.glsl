@@ -38,8 +38,6 @@ float n(vec3 u){
 
 // Returns .x > .y if no intersection
 vec2 rayPlan(vec3 origin, vec3 ray, vec3 center, vec3 normal, out vec3 res){
-    // dot(origin+a*ray-center,normal) = 0
-    // dot(origin-center,normal)+a*dot(ray,normal) = 0
     float t0 = -dot(origin-center,normal)/dot(ray,normal);
     if(t0>0){
         res = origin+t0*ray;
@@ -121,12 +119,8 @@ void main()
 
     vec3 sphereColor = vec3(1, 0., 0.);
     vec3 triangleColor = vec3(0.2,0.7,0.2);
-    int nSpheres = 2;
-    vec3 aSpheres[2] = vec3[](vec3(sin(time/3), 0.5, 0.),vec3(-0.5,0.,-0.5));
     int nLights = 2;
-    vec3 alights[2] = vec3[](vec3(sin(time), 1.3, -1.),vec3(1., sin(time)/2+1.5, -1.));
-    vec3 omniLight = vec3(sin(time), 1.3, -1.);
-    omniLight.xz *= rot2D(time);
+    vec3 alights[2] = vec3[](vec3(sin(time), 1.5, -1.),vec3(1., sin(time)/2+1.5, -1.));
     alights[0].xz *= rot2D(time);
     vec3 uv = vec3(fragPos.x*w/h,fragPos.y,fragPos.z);
     float fov = 70.;
@@ -135,7 +129,7 @@ void main()
     
     vec2 inte = raySphere(camPos, ray, pos, r, hit_point);
     vec3 hit_point2;
-    vec2 p = rayPlan(camPos, ray, vec3(0,0,0), plane, hit_point2);
+    vec2 p = rayPlan(camPos, ray, vec3(0,-1,0), plane, hit_point2);
     vec2 t = raySphere(camPos, ray, alights[0], r);
     bool ground = p.x<p.y;
     bool sphere = inte.x<inte.y&&hit_point.z<=3;
@@ -144,17 +138,9 @@ void main()
     vec3 hit_light;
 
     bool transparent = false;
-    // vec3 a = vec3(-2,1,0);
-    // vec3 b = vec3(1,0,1.5);
-    // vec3 c = vec3(-.5,1,2);
+
     vec3 triangle_hit;
     vec2 tri_inter = rayTriangle(camPos,ray,a,b,c,triangle_hit);
-    vec3 mirror_hit_point;
-    vec2 mirror_inter = rayTriangle(camPos,ray,ma,mb,mc,mirror_hit_point);
-    if (mirror_inter.x>mirror_inter.y){
-        mirror_inter = rayTriangle(camPos,ray,ma,mb,md,mirror_hit_point);
-    }
-    bool mirror = mirror_inter.x<=mirror_inter.y;
 
     bool triangle = tri_inter.x<tri_inter.y;
     for(int i=0; i<nLights; i++){
@@ -168,12 +154,12 @@ void main()
     bool closest2 = (ground)&&(d(hit_point2,camPos)<d(hit_point, camPos));// true if a plane is closer than the sphere
     vec3 ambient = vec3(0.,0.25,1.);
     if (ground){
-        ambient = hit_point2.z<-10?vec3(0.,0.25,1):(int(floor(hit_point2.x)+floor(hit_point2.z))%2==0)?vec3(0.2,0.2,0.2):vec3(0.5,0.5,0.5);
+        ambient = hit_point2.z<-20?vec3(0.,0.25,1):(int(floor(hit_point2.x)+floor(hit_point2.z))%2==0)?vec3(0.2,0.2,0.2):vec3(0.5,0.5,0.5);
     } if (light){
         ambient = vec3(.8,.8,0);
         ground = false;
     } 
-    // if (triangle){
+    // if (triangle){ // ## CODE TO RENDER TRIANGLE ##
     //     ambient = triangleColor;
     // } 
     if (sphere  && !closest2 && !(transparent)){
@@ -186,15 +172,15 @@ void main()
         if(ground){
             vec3 hp;
             vec2 temp = raySphere(hit_point2, (alights[i]-hit_point2), pos, r, hp);
-            if (hit_point2.z>-10 && temp.x<temp.y && d(hit_point2,pos)<d(hit_point2,alights[i])){
+            if (hit_point2.z>-20 && temp.x<temp.y && d(hit_point2,pos)<d(hit_point2,alights[i])){
                 screenColor -= vec4(.2,.2,.2,1);
             }
-            // vec2 temp2 = rayTriangle(hit_point2,(alights[i]-hit_point2),a,b,c,hp);
+            // vec2 temp2 = rayTriangle(hit_point2,(alights[i]-hit_point2),a,b,c,hp); // ## CODE TO RENDER TRIANGLE ##
             // if (!triangle && hit_point2.z>-10 && temp2.x<temp2.y && d(hit_point2,pos)<d(hit_point2,alights[i])){
             //     screenColor -= vec4(.2,.2,.2,1);
             // }
         } 
-        // if(triangle&&!sphere){
+        // if(triangle&&!sphere){ // ## CODE TO RENDER TRIANGLE ##
         //     vec3 ray2 = alights[i]-hit_point;
         //     vec3 ray3 = hit_point-pos;
             

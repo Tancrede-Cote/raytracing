@@ -7,8 +7,8 @@ int w = 1280;
 int h = 720;
 vec3 camPos(0.f, 1.f, 3.f);
 vec3 plane(.0f, 1.f, .0f);
-vec3 pa = vec3(1, 0, -1);
-vec3 b = vec3(-1, 0, -1);
+vec3 pa = vec3(0.5, 0, 1);
+vec3 b = vec3(-1, 0, 0);
 vec3 c = vec3(0, 1, -1);
 bool jump = false;
 Sphere *sphere;
@@ -21,10 +21,8 @@ unsigned int wLocation;
 unsigned int rLocation;
 unsigned int lrLocation;
 
-float g_meshScale = 1.0; // to update based on the mesh size, so that navigation runs at scale
+float g_meshScale = 1.0;
 bool g_rotatingP = false;
-bool g_panningP = false;
-bool g_zoomingP = false;
 double g_baseX = 0.0, g_baseY = 0.0;
 
 unsigned int make_module(const std::string &filepath, unsigned int module_type)
@@ -37,12 +35,10 @@ unsigned int make_module(const std::string &filepath, unsigned int module_type)
 	file.open(filepath);
 	while (std::getline(file, line))
 	{
-		// std::cout << line << std::endl;
 		bufferedLines << line << '\n';
 	}
 	std::string shaderSource = bufferedLines.str();
 	const char *shaderSrc = shaderSource.c_str();
-	// bufferedLines.str("");
 	file.close();
 
 	unsigned int shaderModule = glCreateShader(module_type);
@@ -159,7 +155,7 @@ void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods
 {
 	if (action == GLFW_PRESS && key == GLFW_KEY_ESCAPE)
 	{
-		glfwSetWindowShouldClose(window, true); // Closes the application if the escape key is pressed
+		glfwSetWindowShouldClose(window, true);
 	}
 	else if (action == GLFW_PRESS && key == GLFW_KEY_SPACE)
 	{
@@ -172,7 +168,6 @@ void mouseButtonCallback(GLFWwindow *window, int button, int action, int mods)
 {
 	if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS)
 	{
-		// std::cout << "fdglihdsf" << std::endl;
 		if (!g_rotatingP)
 		{
 			g_rotatingP = true;
@@ -194,10 +189,9 @@ void cursorPosCallback(GLFWwindow *window, double xpos, double ypos)
 	const float dy = static_cast<float>((ypos - g_baseY) / normalizer);
 	if (g_rotatingP)
 	{
-		mat3 RotX(vec3(1, 0, 0), vec3(0, cos(-dy * M_PI / 100), -sin(-dy * M_PI / 100)), vec3(0, sin(-dy * M_PI / 100), cos(-dy * M_PI / 100)));
-		mat3 RotZ(vec3(cos(-dx * M_PI / 100), -sin(-dx * M_PI / 100), 0), vec3(sin(-dx * M_PI / 100), cos(-dx * M_PI / 100), 0), vec3(0, 0, 1));
-		plane = (RotX)*plane;
-		sphere->_pos = RotX * sphere->_pos;
+		mat3 rm = mat3::rotation(vec3(-dy * M_PI / 100, 0, -dx * M_PI / 100), (dx * M_PI) * (dx * M_PI / 100) + (dy * M_PI) * (dy * M_PI / 100));
+		plane = rm * plane;
+		sphere->_pos = rm * sphere->_pos;
 	}
 }
 
@@ -212,7 +206,6 @@ void App::set_up_glfw()
 
 	window = glfwCreateWindow(w, h, "Hello Window!", NULL, NULL);
 	glfwMakeContextCurrent(window);
-	// glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
 	glfwSetKeyCallback(window, keyCallback);
 	glfwSetCursorPosCallback(window, cursorPosCallback);
 	glfwSetMouseButtonCallback(window, mouseButtonCallback);
@@ -228,13 +221,9 @@ void App::set_up_opengl()
 {
 
 	glClearColor(0.f, 0.f, 0.f, 1.0f);
-	// Set the rendering region to the actual screen size
 	glfwGetFramebufferSize(window, &w, &h);
-	//(left, top, width, height)
 	glViewport(0, 0, w, h);
 
-	// glEnable(GL_DEPTH_TEST);
-	// glDepthFunc(GL_LESS);
 	glEnable(GL_CULL_FACE);
 	glCullFace(GL_BACK);
 	shader = make_shader(

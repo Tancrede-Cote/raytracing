@@ -16,32 +16,28 @@ void Sphere::update(float dt)
     {
         normal = -normal;
     }
-    float dp = d(vec3(0, 0, 0), plane);
+    float dp = d(vec3(0, -1, 0), plane);
     if (dp <= 0) // collide
     {
-        if (dp < -0.01)
+        if (dp < -0.002)
         {
-            plane.print();
-            std::cout << std::endl;
             _pos -= plane * (1.f * dp);
         }
-        if (v.dot(plane) < -0.1) // not resting
+        if (v.dot(plane) < -0.01) // not resting
         {
             v -= plane * (2 * v.dot(plane)) / m;
             _pos += v * (1.f * dt);
         }
         else
         { // resting
-            // std::cout << "aaaaa" << std::endl;
             F -= plane.normalized() * F.dot(plane) / plane.norm();
-            a = F / m; //- v * m;
-            v = jump ? v + a * dt + vec3(0, 5, 0) : (v.norm() <= 0.2 ? vec3(0) : v + a * dt);
+            a = F / m;
+            v = jump ? v + a * dt + vec3(0, 5, 0) : v + a * dt;
             _pos += v * (1.f * dt);
         }
     }
-    // else if (triangleCollide(pa, b, c))
+    // else if (triangleCollide(pa, b, c)) // ##CODE FOR TRIANGLE COLLISION##
     // {
-    //     std::cout << "???" << std::endl;
     //     if (v.dot(normal) < -0.) // not resting
     //     {
     //         v -= normal * (2 * v.dot(normal)) / m;
@@ -57,18 +53,15 @@ void Sphere::update(float dt)
     // }
     else
     {
-        // std::cout << "fdhdf" << std::endl;
         F = vec3(0, -9.81, 0);
         a = F / m - v * m;
-        v += a * dt;
+        v += a * dt + (jump ? vec3(0, 5, 0) : vec3(0, 0, 0));
         _pos += v * (1.f * dt);
     }
 }
 
 vec3 rayPlan(vec3 origin, vec3 ray, vec3 center, vec3 normal)
 {
-    // dot(origin+a*ray-center,normal) = 0
-    // dot(origin-center,normal)+a*dot(ray,normal) = 0
     float t0 = -(origin - center).dot(normal) / ray.dot(normal);
     if (t0 > 0)
     {
